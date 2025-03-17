@@ -1,4 +1,4 @@
-# GNU MOT Members API Server
+# testApp API Server
 
 - nodejs: V 20.18.0
 - mariadb
