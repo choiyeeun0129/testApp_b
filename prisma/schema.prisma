@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("MARIADB_URL")
+}
+
+model AuthToken {
+  id           Int       @map("id")             @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  refreshToken String    @map("refresh_token")  @db.VarChar(255) 
+  createdAt    DateTime? @map("created_at")     @default(now()) @db.DateTime(0)
+  expiredAt    DateTime  @map("expired_at")     @db.DateTime(0) 
+  user         Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "user_id")
+  @@map("auth_token")
+}
+
+model AuthLog {
+  id         Int       @map("id")         @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  ip         String?   @map("ip")         @db.VarChar(100)
+  userAgent  String?   @map("user_agent") @db.VarChar(500)
+  result     Boolean?  @map("result") 
+  createdAt  DateTime? @map("created_at") @default(now()) @db.DateTime(0)
+  user       Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "user_id")
+  @@map("auth_log")
+}
+
+model AuthNumber {
+  userId     Int       @map("user_id")  @id
+  authNumber String    @map("auth_number")  @db.VarChar(10)
+  ip         String?   @map("ip")         @db.VarChar(100)
+  userAgent  String?   @map("user_agent") @db.VarChar(500)
+  createdAt  DateTime? @map("created_at") @default(now()) @db.DateTime(0)
+  updatedAt  DateTime? @map("updated_at") @db.DateTime(0)
+
+  @@map("auth_number")
+}
+
+model SnsAccounts {
+  id           Int          @map("id")            @id @default(autoincrement())
+  userId       Int          @map("user_id")
+  snsProvider  String       @map("sns_provider")  @db.VarChar(255)
+  snsId        String       @map("sns_id")        @db.VarChar(255)
+  createdAt    DateTime?    @map("created_at")    @default(now()) @db.DateTime(0)
+  updatedAt    DateTime? @map("updated_at") @db.DateTime(0)
+  user         Users        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("sns_accounts")
+}
+
+
+model CodeGroups {
+  grpCode   String     @map("grp_code")   @id @db.VarChar(20)
+  name       String    @map("name")       @db.VarChar(100)
+  memo       String?   @map("memo")       @db.VarChar(1000)
+  orderSn    Int?      @map("order_sn")   @default(1) @db.SmallInt
+  enabled    Boolean?  @map("enabled")    @default(true)
+  createdAt  DateTime? @map("created_at") @default(now()) @db.DateTime(0)
+  updatedAt  DateTime? @map("updated_at") @db.DateTime(0)
+  codes      Codes[]
+
+  @@map("code_groups")
+}
+
+model Codes {
+  code            String           @map("code")        @id @db.VarChar(20)
+  grpCode         String           @map("grp_code")    @db.VarChar(20)
+  name            String           @map("name")        @db.VarChar(100)
+  value           String?          @map("value")       @db.VarChar(50)
+  memo            String?          @map("memo")        @db.VarChar(1000)
+  orderSn         Int?             @map("order_sn")    @default(1) @db.SmallInt
+  enabled         Boolean?         @map("enabled")     @default(true)
+  createdAt       DateTime?        @map("created_at")  @default(now()) @db.DateTime(0)
+  updatedAt       DateTime?        @map("updated_at")  @db.DateTime(0)
+  codeGroup       CodeGroups       @relation(fields: [grpCode], references: [grpCode])
+  roleUsers       Users[]          @relation(name: "RoleCodeRelation") 
+  batchUsers      Users[]          @relation(name: "BatchCodeRelation") 
+  degrees         Users[]          @relation(name: "DegreeCodeRelation") 
+  courses         Users[]          @relation(name: "CourseCodeRelation") 
+  documents       Documents[]      @relation(name: "DocumentTypeRelation")
+  
+  @@index([grpCode], map: "grp_code")
+  @@map("codes")
+}
+
+model Files {
+  id                 Int       @map("id")                 @id @default(autoincrement())
+  fileName           String    @map("file_name")          @db.VarChar(255)
+  originalName       String    @map("original_name")      @db.VarChar(255)
+  path               String    @map("path")               @db.VarChar(255)
+  destination        String?   @map("destination")        @db.VarChar(255)
+  size               Int?      @map("size")               @default(0)
+  mimeType           String?   @map("mime_type")          @db.VarChar(50)
+  url                String?   @map("url")                @db.VarChar(255)
+  imageWidth         Int?      @map("image_width")        @default(0) @db.SmallInt
+  imageHeight        Int?      @map("image_height")       @default(0) @db.SmallInt
+  createdAt          DateTime? @map("created_at")         @default(now()) @db.DateTime(0)
+  updatedAt          DateTime? @map("updated_at")         @db.DateTime(0)
+  users              Users[]  
+
+  @@map("files")
+}
+
+model Users {
+  id           Int          @map("id")            @id @default(autoincrement())
+  loginId      String       @map("login_id")      @db.VarChar(100)
+  name         String       @map("name")          @db.VarChar(255)
+  password     String       @map("password")      @db.VarChar(100) @default("")
+  profileImage Int?         @map("profile_image") 
+  birthYear    Int?         @map("birth_year")    @db.SmallInt
+  mobileNumber String?      @map("mobile_number") @db.VarChar(20)
+  email        String?      @map("email")         @db.VarChar(100)
+  website      String?      @map("website")       @db.VarChar(255)
+  roleCode     String?      @map("role_code")     @db.VarChar(20)
+  batchCode    String?      @map("batch_code")    @db.VarChar(20)
+  memo         String?      @map("memo")          @db.VarChar(1000)
+
+  companyName  String?      @map("company_name")  @db.VarChar(255)
+  officeAddress String?     @map("office_address") @db.VarChar(255)
+  officePhone  String?      @map("office_phone")  @db.VarChar(100)
+  level        String?      @map("level")         @db.VarChar(100)
+  job          String?      @map("job")           @db.VarChar(100)
+  major        String?      @map("major")         @db.VarChar(255)
+  degreeCode   String?      @map("degree_code")   @db.VarChar(20)
+  courseCode   String?      @map("course_code")   @db.VarChar(20)
+  advisor      String?      @map("advisor")       @db.VarChar(255)
+  retirement   Boolean?     @map("retirement")    @default(false)
+
+  graduated    Boolean?     @map("graduated")     @default(false)
+  isPublic     Boolean?     @map("is_public")     @default(true)
+  isPublicMobile Boolean?   @map("is_public_mobile") @default(true)
+  isPublicOffice Boolean?   @map("is_public_office") @default(true)
+  isPublicEmail  Boolean?   @map("is_public_email")  @default(true)
+  isPublicDepartment Boolean? @map("is_public_department") @default(true)
+  isPublicBirth  Boolean?   @map("is_public_birth") @default(true)
+  enabled      Boolean?     @map("enabled")       @default(true)
+
+  lastLoginDt  DateTime?    @map("last_login_dt") @db.DateTime(0)
+  createdAt    DateTime?    @map("created_at")    @default(now()) @db.DateTime(0)
+  updatedAt    DateTime?    @map("updated_at")    @db.DateTime(0)
+  deletedAt    DateTime?    @map("deleted_at")    @db.DateTime(0)
+  role         Codes?       @relation(name: "RoleCodeRelation", fields: [roleCode], references: [code], onDelete: Cascade)
+  batch        Codes?       @relation(name: "BatchCodeRelation", fields: [batchCode], references: [code], onDelete: Cascade)
+  degree       Codes?       @relation(name: "DegreeCodeRelation", fields: [degreeCode], references: [code], onDelete: Cascade)
+  course       Codes?       @relation(name: "CourseCodeRelation", fields: [courseCode], references: [code], onDelete: Cascade)
+  imageFile    Files?       @relation(fields: [profileImage], references: [id], onDelete: SetNull)  
+  authToken    AuthToken[]  
+  authLog      AuthLog[]   
+  snsAccounts  SnsAccounts[]   
+  favorites    UserFavorites[] @relation(name: "FavoritesRelation") 
+  favoriteTargets UserFavorites[] @relation(name: "FavoritesTargetRelation") 
+
+  @@index([profileImage], map: "profile_image")
+  @@map("users")
+}
+
+model Documents {
+  id           Int          @map("id")            @id @default(autoincrement())
+  typeCode     String       @map("type_code")     @db.VarChar(20)
+  title        String       @map("title")         @db.VarChar(255)
+  content      String?      @map("content")       @db.LongText
+  createdAt    DateTime?    @map("created_at")    @default(now()) @db.DateTime(0)
+  updatedAt    DateTime?    @map("updated_at")    @db.DateTime(0)
+  type         Codes        @relation(name: "DocumentTypeRelation", fields: [typeCode], references: [code], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model UserFavorites {
+  id         Int       @map("id")         @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  targetId   Int       @map("target_id")
+  createdAt  DateTime? @map("created_at") @default(now()) @db.DateTime(0)
+  user       Users     @relation(name: "FavoritesRelation", fields: [userId], references: [id], onDelete: Cascade)
+  target     Users     @relation(name: "FavoritesTargetRelation", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "user_id")
+  @@index([targetId], map: "target_id")
+  @@map("user_favorites")
+}
+
+model SystemConfig {
+  id         Int       @map("id")         @id @default(autoincrement())
+  name       String    @map("name")       @db.VarChar(100)
+  value      String    @map("value")      @db.VarChar(255)
+  min        Int?      @map("min")
+  max        Int?      @map("max")
+  memo       String?   @map("memo")       @db.VarChar(500)
+  orderSn    Int?      @map("order_sn")   @default(1) @db.SmallInt
+  editable   Boolean?  @map("editable")   @default(true)
+  enabled    Boolean?  @map("enabled")    @default(true)
+  createdAt  DateTime? @map("created_at") @default(now()) @db.DateTime(0)
+  updatedAt  DateTime? @map("updated_at") @db.DateTime(0)
+  deletedAt  DateTime? @map("deleted_at") @db.DateTime(0)
+
+  @@map("system_config")
+}
